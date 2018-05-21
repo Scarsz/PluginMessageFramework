@@ -6,6 +6,9 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.network.FMLEventChannel;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
@@ -36,16 +39,16 @@ public class ImplForgeServerGateway extends ServerGatewaySupport<EntityPlayerMP>
     @Override
     @SuppressWarnings("unchecked")
     public EntityPlayerMP getConnection() {
-        List<EntityPlayerMP> players = MinecraftServer.getServer().getConfigurationManager().playerEntityList;
+        List<EntityPlayerMP> players = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers();
         return players.size() > 0 ? players.iterator().next() : null;
     }
 
     @SubscribeEvent
     public void onPacketEvent(FMLNetworkEvent.ServerCustomPacketEvent event) {
-        EntityPlayerMP client = ((NetHandlerPlayServer) event.handler).playerEntity;
-        if (event.packet.channel().equals(getChannel())) {
+        EntityPlayerMP client = ((NetHandlerPlayServer) event.getHandler()).player;
+        if (event.getPacket().channel().equals(getChannel())) {
             try {
-                incomingPayload(client, event.packet.payload().array());
+                incomingPayload(client, event.getPacket().payload().array());
             } catch (IOException e) {
                 logger.error("Error handling incoming payload.", e);
             }

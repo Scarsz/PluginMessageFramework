@@ -28,9 +28,9 @@ public class ImplForgeClientGateway extends ClientGatewaySupport<FMLEventChannel
 
     @SubscribeEvent
     public void onClientPacket(FMLNetworkEvent.ClientCustomPacketEvent event) {
-        if (event.packet.channel().equals(getChannel())) {
+        if (event.getPacket().channel().equals(getChannel())) {
             try {
-                incomingPayload(connection, event.packet.payload().array());
+                incomingPayload(connection, event.getPacket().payload().array());
             } catch (IOException e) {
                 logger.error("Error handling incoming payload.", e);
             }
