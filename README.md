@@ -37,7 +37,3 @@ public class MyPacket extends StandardPacket {
 ```
 
 Please note that all fields **must** be of a type which implements **java.io.Serializable** otherwise you may need to customize the serialization and deserialization by implementing your own **readObject(ObjectInputStream)** and **writeObject(ObjectOutputStream)** methods.
-
-## Coming Soon
-
-* Dependency injection with [GUICE](https://github.com/google/guice)

@@ -11,8 +11,8 @@ subprojects {
     apply plugin: 'maven'
     apply plugin: 'maven-publish'
 
-    getProject().group = 'com.ikeirnez.pluginmessageframework'
-    getProject().version = "1.0.0-SNAPSHOT"
+    group = 'github.scarsz.pluginmessageframework'
+    version = "1.0.0-SNAPSHOT"
 
     repositories {
         mavenCentral()
