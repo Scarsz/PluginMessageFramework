@@ -25,10 +25,10 @@ public void preInit(FMLPreInitializationEvent event) {
 @EventHandler
 public void init(FMLInitializationEvent event) {
     if (FMLCommonHandler.instance().getEffectiveSide() == Side.CLIENT) {
-        clientGateway = ForgeGatewayProvider.getClientGateway("MyChannelName");
+        clientGateway = ForgeGatewayProvider.getClientGateway("identifier:channel");
         clientGateway.registerListener(this);
     } else {
-        serverGateway = ForgeGatewayProvider.getServerGateway("MyChannelName");
+        serverGateway = ForgeGatewayProvider.getServerGateway("identifier:channel");
         serverGateway.registerListener(this);
     }
 }

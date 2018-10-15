@@ -9,7 +9,7 @@ public ServerGateway<Player> gateway;
 
 @Listener
 public void onServerStart(GameStartedServerEvent event) {
-    gateway = SpongeGatewayProvider.getGateway("MyChannelName", this);
+    gateway = SpongeGatewayProvider.getGateway("identifier:channel", this);
     gateway.registerListener(this);
 }
 

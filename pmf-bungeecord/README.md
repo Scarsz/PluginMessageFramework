@@ -12,7 +12,7 @@ public ProxyGateway<ProxiedPlayer, Server, ServerInfo> gateway;
 
 @Override
 public void onEnable() {
-    gateway = BungeeGatewayProvider.getGateway("MyChannelName", ProxySide.SERVER, this);
+    gateway = BungeeGatewayProvider.getGateway("identifier:channel", ProxySide.SERVER, this);
     gateway.registerListener(this);
 }
 

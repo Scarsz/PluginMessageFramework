@@ -12,7 +12,7 @@ public ServerGateway<Player> gateway;
 
 @Override
 public void onEnable() {
-    gateway = BukkitGatewayProvider.getGateway("MyChannelName", this);
+    gateway = BukkitGatewayProvider.getGateway("identifier:channel", this);
     gateway.registerListener(this);
 }
 
