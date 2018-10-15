@@ -60,14 +60,11 @@ public class ImplBukkitGateway extends ServerGatewaySupport<Player> implements L
 
     @EventHandler
     public void onPlayerJoin(final PlayerJoinEvent event) {
-        Bukkit.getScheduler().runTaskLater(plugin, new Runnable() { // delay to work around plugin messages not sending when players first join
-            @Override
-            public void run() {
-                if (queuedPackets()) {
-                    sendQueuedPackets(event.getPlayer());
-                }
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (queuedPackets()) {
+                sendQueuedPackets(event.getPlayer());
             }
-        }, 10L);
+        }, 10L); // delay to work around plugin messages not sending when players first join
     }
 
 }
