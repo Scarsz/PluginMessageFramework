@@ -1,10 +1,11 @@
 package github.scarsz.pluginmessageframework.bungeecord;
 
 import com.google.common.base.Preconditions;
+
+import github.scarsz.pluginmessageframework.gateway.ProxyGateway;
 import github.scarsz.pluginmessageframework.gateway.ProxySide;
 import github.scarsz.pluginmessageframework.internal.ProxyGatewaySupport;
 import github.scarsz.pluginmessageframework.packet.BasePacket;
-import github.scarsz.pluginmessageframework.gateway.ProxyGateway;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.Connection;
@@ -39,10 +40,10 @@ public class ImplBungeeGateway extends ProxyGatewaySupport<ProxiedPlayer, Server
         switch (getProxySide()) {
             default:
                 throw new UnsupportedOperationException("Don't know how to handle sending payload from the ProxySide: " + getProxySide() + ".");
-            case ProxySide.CLIENT:
+            case CLIENT:
                 connection.sendData(getChannel(), bytes);
                 break;
-            case ProxySide.SERVER:
+            case SERVER:
                 Server server = connection.getServer();
                 Preconditions.checkNotNull(server, "Player is not connected to a server.");
                 server.sendData(getChannel(), bytes);
