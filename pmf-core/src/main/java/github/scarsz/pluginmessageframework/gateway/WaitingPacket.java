@@ -7,8 +7,8 @@ import java.util.function.Predicate;
 
 public class WaitingPacket<T extends BasePacket> {
 
-    final Predicate<T> condition;
-    final Consumer<T> action;
+    private final Predicate<T> condition;
+    private final Consumer<T> action;
 
     public WaitingPacket(Predicate<T> condition, Consumer<T> action) {
         this.condition = condition;

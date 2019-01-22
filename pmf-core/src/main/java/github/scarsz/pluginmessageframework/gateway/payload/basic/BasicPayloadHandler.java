@@ -178,4 +178,5 @@ public class BasicPayloadHandler implements PayloadHandler<RawPacket> {
         packet.writeData(dataOutputStream);
         return byteArrayOutputStream.toByteArray();
     }
+
 }

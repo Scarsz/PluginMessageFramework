@@ -9,6 +9,7 @@ import github.scarsz.pluginmessageframework.packet.BasePacket;
  * @param <C> the client connection type
  */
 public interface ServerGateway<C> extends Gateway<C> {
+
     /**
      * Sends the packet on a gateway provided by the {@link GatewaySupport} specified in the constructor.
      *
@@ -32,4 +33,5 @@ public interface ServerGateway<C> extends Gateway<C> {
      * @return the connection (may be null)
      */
     C getConnection();
+
 }

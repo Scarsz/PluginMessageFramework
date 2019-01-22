@@ -141,12 +141,7 @@ public abstract class GatewaySupport<C> implements Gateway<C> {
                     }
                 }
 
-                List<Object> list = listeners.get(packetClazz);
-                if (list == null) {
-                    list = new ArrayList<>();
-                    listeners.put(packetClazz, list);
-                }
-
+                List<Object> list = listeners.computeIfAbsent(packetClazz, k -> new ArrayList<>());
                 list.add(listener);
             }
         }
