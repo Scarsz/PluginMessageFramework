@@ -3,6 +3,7 @@ package github.scarsz.pluginmessageframework.internal;
 import github.scarsz.pluginmessageframework.PrimaryArgumentProvider;
 import github.scarsz.pluginmessageframework.Utilities;
 import github.scarsz.pluginmessageframework.gateway.Gateway;
+import github.scarsz.pluginmessageframework.gateway.WaitingPacket;
 import github.scarsz.pluginmessageframework.gateway.payload.PayloadHandler;
 import github.scarsz.pluginmessageframework.gateway.payload.StandardPayloadHandler;
 import github.scarsz.pluginmessageframework.packet.BasePacket;
@@ -14,10 +15,13 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Support class for {@link Gateway} implementations.
@@ -30,6 +34,8 @@ public abstract class GatewaySupport<C> implements Gateway<C> {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private String channel;
     private PayloadHandler payloadHandler = null;
+    private final Map<Class<?>, Set<WaitingPacket>> waitingPackets = new HashMap<>();
+    private final ScheduledExecutorService waitingScheduler = Executors.newSingleThreadScheduledExecutor();
 
     private final Map<Class<? extends BasePacket>, List<Object>> listeners = new HashMap<>();
 
@@ -157,6 +163,16 @@ public abstract class GatewaySupport<C> implements Gateway<C> {
     public void receivePacket(C connection, BasePacket packet) {
         Class<? extends BasePacket> packetClass = packet.getClass();
 
+        if (waitingPackets.containsKey(packetClass)) {
+            // there are packet listeners waiting for this event
+            Set<WaitingPacket> set = this.waitingPackets.get(packetClass);
+            // make all waiting packets attempt their conditions with this received packet
+            // if the condition passes, the action is executed right now
+            Set<WaitingPacket> successful = set.stream().filter(waitingPacket -> waitingPacket.attempt(packet)).collect(Collectors.toSet());
+            // get rid of the packets that were successful from the waiting lists
+            set.removeAll(successful);
+        }
+
         if (listeners.containsKey(packetClass)) {
             for (Object listener : listeners.get(packetClass)) {
                 methodLoop: for (Method method : listener.getClass().getMethods()) {
@@ -190,6 +206,51 @@ public abstract class GatewaySupport<C> implements Gateway<C> {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Asynchronously wait until a packet matching the given condition is received then call the given action
+     *
+     * @param <T> The packet type to wait for
+     * @param packet The packet type to wait for
+     * @param condition The condition that indicates whether this wait event will accept this packet
+     * @param action The action that should occur when the condition is met
+     */
+    public <T extends BasePacket> void awaitPacket(Class<T> packet, Predicate<T> condition, Consumer<T> action) {
+        awaitPacket(packet, condition, action, -1, null, null);
+    }
+
+    /**
+     * Asynchronously wait until a packet matching the given condition is received then call the given action. If no packet matches in time, then the timeout action will occur instead.
+     *
+     * @param <T> The packet type to wait for
+     * @param packet The packet type to wait for
+     * @param condition The condition that indicates whether this wait event will accept this packet
+     * @param action The action that should occur when the condition is met
+     * @param timeout The amount of time to wait until aborting and calling the timeout action
+     * @param unit The unit of time that the timeout is specified in
+     * @param timeoutAction The action that should occur when the condition was not met in time
+     */
+    public <T extends BasePacket> void awaitPacket(Class<T> packet, Predicate<T> condition, Consumer<T> action,
+                                                   long timeout, TimeUnit unit, Runnable timeoutAction) {
+        Objects.requireNonNull(packet, "packet type must not be null");
+        Objects.requireNonNull(condition, "condition must not be null");
+        Objects.requireNonNull(action, "action must not be null");
+
+        // get the set of waiting listeners for this packet type, add new waiting packet to the list
+        WaitingPacket waitingPacket = new WaitingPacket<>(condition, action);
+        Set<WaitingPacket> set = waitingPackets.computeIfAbsent(packet, c -> new HashSet<>());
+        set.add(waitingPacket);
+
+        if (timeout > 0 && unit != null) {
+            waitingScheduler.schedule(() -> {
+                // set#remove is ran regardless of whether or not timeoutAction is null due to it being evaluated first
+                if (set.remove(waitingPacket) && timeoutAction != null) {
+                    // run timeout action if one was specified
+                    timeoutAction.run();
+                }
+            }, timeout, unit);
         }
     }
 
