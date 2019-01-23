@@ -1,7 +1,9 @@
-defaultTasks 'clean', 'build', 'test', 'publishToMavenLocal'
+defaultTasks 'clean', 'javadoc', 'check', 'build', 'publishToMavenLocal'
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.8'
+    gradleVersion = '4.10.2'
+    //noinspection UnnecessaryQualifiedReference
+    distributionType = Wrapper.DistributionType.ALL
 }
 
 subprojects {
@@ -19,14 +21,49 @@ subprojects {
         mavenLocal()
     }
 
+    configurations {
+        deployerJars
+    }
+
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+
+    artifacts {
+        archives sourcesJar
+        archives javadocJar
+    }
+
     checkstyle {
         toolVersion = 6.5
-        configFile = new File(rootDir, "checkstyle.xml")
+        configFile = getRootProject().file("checkstyle.xml")
         configProperties = [
-                'basedir': project.projectDir,
-                'suppressions': new File(rootDir, "checkstyle-suppressions.xml"),
-                'severity': 'warning'
+                'basedir'     : project.projectDir,
+                'suppressions': getRootProject().file("checkstyle-suppressions.xml").absoluteFile,
+                'severity'    : 'warning'
         ]
+    }
+    checkstyleMain {
+        source = sourceSets.main.allJava
+    }
+    checkstyleTest {
+        source = sourceSets.test.allJava
+    }
+
+    uploadArchives {
+        repositories.mavenDeployer {
+            configuration = project.configurations.deployerJars
+            repository(url: System.env.mavenRepo) {
+                authentication(userName: System.env.mavenRepoUsername, password: System.env.mavenRepoPassword)
+            }
+        }
+        dependsOn check
     }
 
     tasks.jar.dependsOn "check"
@@ -44,11 +81,14 @@ subprojects {
         }
     }
 
+    dependencies {
+        deployerJars "org.apache.maven.wagon:wagon-http:+"
+    }
 }
 
 task generateAggregatedJavadocs(type: Javadoc) {
     source = subprojects.collect { project -> project.sourceSets.main.allJava }
     classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
     excludes = ['**/internal/**', '**/Impl*']
-    destinationDir = new File(projectDir, 'docs')
+    destinationDir = getRootProject().file('docs')
 }
